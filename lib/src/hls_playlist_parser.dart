@@ -146,7 +146,7 @@ class HlsPlaylistParser {
       throw const FormatException("extraLines doesn't have valid tag");
 
     return isMasterPlayList
-        ? _parseMasterPlaylist(extraLines.iterator, uri.toString())
+        ? _parseMasterPlaylist(extraLines, uri.toString())
         : _parseMediaPlaylist(masterPlaylist, extraLines, uri.toString());
   }
 
@@ -169,7 +169,7 @@ class HlsPlaylistParser {
   }
 
   HlsMasterPlaylist _parseMasterPlaylist(
-      Iterator<String> extraLines, String baseUri) {
+      List<String> extraLines, String baseUri) {
     var tags = <String>[];
     var mediaTags = <String>[];
     var sessionKeyDrmInitData = <DrmInitData>[];
@@ -185,9 +185,9 @@ class HlsPlaylistParser {
     var muxedCaptionFormats = <Format>[];
     var variableDefinitions = <String, String>{};
 
-    while (extraLines.moveNext()) {
-      var line = extraLines.current;
-
+    for (var i = 0; i < extraLines.length; i++) {
+      var line = extraLines[i];
+      
       if (line.startsWith(TAG_DEFINE)) {
         var key = _parseStringAttr(
           source: line,
@@ -298,10 +298,12 @@ class HlsPlaylistParser {
           variableDefinitions: variableDefinitions,
         );
 
-        extraLines.moveNext();
+        if(extraLines[i + 1][0] == '#')
+            continue;
+        line = extraLines[++i];
 
         var referenceUri = _parseStringAttr(
-          source: extraLines.current,
+          source: line,
           variableDefinitions: variableDefinitions,
         );
         if (referenceUri == null)
